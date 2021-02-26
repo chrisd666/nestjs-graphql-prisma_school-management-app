@@ -9,10 +9,20 @@ export class LessonService {
 
   private model = this.prisma.lesson;
 
-  async createLesson(data: CreateLessonInput) {
-    const lesson = await this.model.create({ data });
+  async createLesson(input: CreateLessonInput) {
+    const { students, ...rest } = input;
+    let data: Prisma.LessonCreateInput = { ...rest };
 
-    return lesson;
+    if (input.students && input.students.length > 0) {
+      const studentIds = [];
+      students.forEach((id) => studentIds.push({ id }));
+
+      data['students'] = { connect: studentIds };
+    }
+
+    const createdLesson = await this.model.create({ data });
+
+    return await this.getLesson(createdLesson.id);
   }
 
   async getLesson(id: number) {
